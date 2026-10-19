@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>License Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #474646;
+      min-height: 100vh;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: flex; }
+
+    #login-screen {
+      align-items: center; justify-content: center;
+      padding: 2rem 1rem; flex-direction: column;
+      min-height: 100vh;
+    }
+    .card {
+      background: #fff8f3; border: 1px solid hwb(24 33% 0%);
+      border-radius: 14px; padding: 2rem 1.75rem;
+      width: 100%; max-width: 380px;
+    }
+    .logo {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: #FFA240; display: flex;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
+      background-image: url('logo.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    h1 { font-size: 20px; font-weight: 500; color: #000000; margin-bottom: 6px; }
+    .sub { font-size: 14px; color: #888; margin-bottom: 1.5rem; line-height: 1.5; }
+    label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; }
+    .key-preview {
+      font-family: monospace; font-size: 12px;
+      background: #ffffff; border: 1px solid #FFA240;
+      border-radius: 8px; padding: 6px 10px;
+      color: #FFA240; text-align: center;
+      margin-bottom: 1rem; letter-spacing: 0.05em;
+    }
+    .input-wrap { position: relative; margin-bottom: 1rem; }
+    .input-wrap input {
+      width: 100%; padding: 10px 40px 10px 12px;
+      border: 1px solid #FFA240; border-radius: 8px;
+      font-family: monospace; font-size: 14px;
+      letter-spacing: 0.04em; outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-wrap input:focus { border-color: #FFA240; }
+    .toggle {
+      position: absolute; right: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      cursor: pointer; color: #FFA240; padding: 4px;
+    }
+    .submit-btn {
+      width: 100%; padding: 10px;
+      background: #FFA240; color: #7a3a00;
+      border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .submit-btn:hover { background: #ff6640; color: #fff; }
+    .submit-btn:active { transform: scale(0.98); }
+    .msg { font-size: 13px; margin-top: 0.75rem; text-align: center; min-height: 18px; }
+    .msg.ok { color: #3B6D11; }
+    .msg.err { color: #D73535; }
+    hr { border: none; border-top: 1px solid #FFD41D; margin: 1.25rem 0; }
+    .hint { font-size: 12px; color: #aaa; text-align: center; }
+
+    #loading-screen {
+      align-items: center; justify-content: center;
+      padding: 3rem 1rem; flex-direction: column;
+      gap: 16px; min-height: 100vh;
+    }
+    .loading-title { font-size: 16px; font-weight: 500; color: #d77e35; }
+    .loading-sub { font-size: 13px; color: #FFA240; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #FFD41D;
+      border-top-color: #d77e35;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #dashboard-screen {
+      flex-direction: row;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 220px; min-width: 180px;
+      background: #fff8f0;
+      border-right: 1px solid #FFD41D;
+      padding: 1.5rem 1.25rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .sidebar-title {
+      font-size: 13px; font-weight: 500; color: #FFA240;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .cred-field { display: flex; flex-direction: column; gap: 5px; }
+    .cred-field label { font-size: 12px; color: #888; margin: 0; }
+    .cred-field input,
+    .cred-field select {
+      width: 100%; padding: 8px 10px;
+      border: 1px solid #FFD41D; border-radius: 8px;
+      font-size: 13px; outline: none;
+      background: #fff; transition: border-color 0.2s;
+    }
+    .cred-field input:focus,
+    .cred-field select:focus { border-color: #FFA240; }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #ccc; display: inline-block;
+      margin-right: 6px; flex-shrink: 0;
+    }
+    .status-dot.connected { background: #3B6D11; }
+    .status-row { display: flex; align-items: center; font-size: 12px; color: #888; margin-top: 4px; }
+    .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+    .connect-btn {
+      width: 100%; padding: 9px;
+      background: #FFA240; color: #7a3a00;
+      border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .connect-btn:hover { background: #ff6640; color: #fff; }
+    .connect-btn:active { transform: scale(0.98); }
+    .unlock-btn {
+      width: 100%; padding: 9px;
+      background: #D73535; color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      cursor: not-allowed; opacity: 0.35;
+      transition: opacity 0.3s, background 0.2s;
+    }
+    .unlock-btn.active { opacity: 1; cursor: pointer; }
+    .unlock-btn.active:hover { background: #FF4646; }
+    .unlock-btn.active:active { transform: scale(0.98); }
+
+    .log-area {
+      flex: 1; display: flex; flex-direction: column; padding: 1.25rem;
+      background: #fff;
+    }
+    .log-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 10px;
+    }
+    .log-title { font-size: 14px; font-weight: 500; color: #d77635; }
+    .clear-btn {
+      font-size: 12px; color: #FFA240; background: none;
+      border: 1px solid #FFD41D; border-radius: 8px;
+      padding: 4px 10px; cursor: pointer;
+    }
+    .clear-btn:hover { background: #fff8f0; }
+    .log-box {
+      flex: 1; background: #1e1e1e;
+      border: 1px solid #333; border-radius: 8px;
+      padding: 12px; font-family: monospace; font-size: 12px;
+      overflow-y: auto; min-height: 400px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .log-line { display: flex; gap: 10px; }
+    .log-time { color: #555; min-width: 70px; }
+    .log-info { color: #FFD41D; }
+    .log-ok { color: #81c784; }
+    .log-warn { color: #FFA240; }
+    .log-err { color: #FF4646; }
+    .log-default { color: #aaa; }
+    @media (max-width: 768px) {
+      #dashboard-screen {
+        flex-direction: column;
+      }
+
+    .sidebar {
+      width: 100%;
+      min-width: unset;
+      border-right: none;
+      border-bottom: 1px solid #FFD41D;
+    }
+
+    .log-area {
+      width: 100%;
+    }
+}
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-screen" class="screen active">
+    <div class="card">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem;">
+        <div class="logo">
+        </div>
+        <h2 style="font-size: 24px; font-weight: 500; color: #000000; margin: 0;">Unban Tool Pro</h2>
+      </div>
+      <h1>Enter your license</h1>
+      <p class="sub">Access to the tool using your license key to continue.</p>
+      <div class="key-preview" id="key-preview">XXXX-XXXX-XXXX-XXXX</div>
+      <label for="licenseInput">License key</label>
+      <div class="input-wrap">
+        <input type="password" id="licenseInput"
+          placeholder="XXXX-XXXX-XXXX-XXXX"
+          maxlength="19" autocomplete="off"
+          oninput="formatKey(this)" />
+        <button class="toggle" onclick="toggleVisible()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.2"/>
+          </svg>
+        </button>
+      </div>
+      <button class="submit-btn" onclick="activate()">Activate license</button>
+      <p class="msg" id="msg"></p>
+      <hr>
+      <p class="hint">Don't have a license? Contact your administrator.</p>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading-screen" class="screen">
+    <div class="spinner"></div>
+    <div class="loading-title">Verifying license...</div>
+    <div class="loading-sub">Please wait a moment.</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard-screen" class="screen">
+    <div class="sidebar">
+      <div class="sidebar-title">Credentials</div>
+      <div class="cred-field">
+        <label>Username</label>
+        <input type="text" id="cred-userid" placeholder="@" />
+      </div>
+      <div class="cred-field">
+        <label>Country</label>
+        <select id="cred-country">
+          <option value="fr">🇫🇷 France</option>
+          <option value="es">🇪🇸 Spain</option>
+          <option value="it">🇮🇹 Italy</option>
+          <option value="gb">🇬🇧 United Kingdom</option>
+          <option value="nl">🇳🇱 Netherlands</option>
+        </select>
+      </div>
+      <div class="status-row">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-text">Disconnected</span>
+      </div>
+      <div class="btn-group">
+        <button class="connect-btn" id="connect-btn" onclick="connectAction()">Connect</button>
+        <button class="unlock-btn" id="unlock-btn" onclick="unlockAction()">Unban account</button>
+      </div>
+    </div>
+    <div class="log-area">
+      <div class="log-header">
+        <span class="log-title">Output / Logs</span>
+        <button class="clear-btn" onclick="clearLogs()">Clear</button>
+      </div>
+      <div class="log-box" id="log-box"></div>
+    </div>
+  </div>
+
+  <script>
+    const VALID_KEY = "ABCD-1234-EFGH-5678";
+    let connected = false;
+    let connecting = false;
+    let unlocking = false;
+    let logTimers = [];
+
+    const countries = {
+      us: { name: "United States", lang: "English",     langLine: "Language selected: English" },
+      jp: { name: "Japan",         lang: "Japanese",     langLine: "Language selected: Japanese" },
+      de: { name: "Germany",       lang: "German",       langLine: "Language selected: German" },
+      fr: { name: "France",        lang: "French",       langLine: "Language selected: French" },
+      es: { name: "Spain",         lang: "Spanish",      langLine: "Language selected: Spanish" },
+      cn: { name: "China",         lang: "Chinese",      langLine: "Language selected: Chinese" },
+      br: { name: "Brazil",        lang: "Portuguese",   langLine: "Language selected: Portuguese" },
+      ru: { name: "Russia",        lang: "Russian",      langLine: "Language selected: Russian" },
+      it: { name: "Italy",         lang: "Italian",      langLine: "Language selected: Italian" },
+      gb: { name: "United Kingdom",lang: "English (UK)", langLine: "Language selected: English (UK)" },
+    };
+
+    function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    function formatKey(input) {
+      let v = input.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 16);
+      let parts = [];
+      for (let i = 0; i < v.length; i += 4) parts.push(v.slice(i, i+4));
+      input.value = parts.join("-");
+      const preview = document.getElementById("key-preview");
+      const display = input.value || "XXXX-XXXX-XXXX-XXXX";
+      const pad = display.padEnd(19, "X").slice(0, 19);
+      preview.textContent = input.type === "password"
+        ? pad.replace(/[A-Za-z0-9]/g, "•") : pad;
+    }
+
+    function toggleVisible() {
+      const inp = document.getElementById("licenseInput");
+      inp.type = inp.type === "password" ? "text" : "password";
+      formatKey(inp);
+    }
+
+    function show(id) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    function activate() {
+      const val = document.getElementById("licenseInput").value;
+      const msg = document.getElementById("msg");
+      msg.className = "msg";
+      if (!val) { msg.className = "msg err"; msg.textContent = "Please enter a license key."; return; }
+      if (val.toUpperCase() === VALID_KEY) {
+        msg.className = "msg ok"; msg.textContent = "Valid license. Loading...";
+        setTimeout(() => {
+          show("loading-screen");
+          setTimeout(() => {
+            show("dashboard-screen");
+            addLog("info", "License verified successfully.");
+            addLog("ok", "System started.");
+            addLog("default", "Waiting for connection...");
+          }, 2000);
+        }, 600);
+      } else {
+        msg.className = "msg err"; msg.textContent = "Invalid license key. Please try again.";
+      }
+    }
+
+    function now() {
+      return new Date().toLocaleTimeString("en-GB", {
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      });
+    }
+
+    function addLog(type, text) {
+      const box = document.getElementById("log-box");
+      const line = document.createElement("div");
+      line.className = "log-line";
+      line.innerHTML = `<span class="log-time">${now()}</span><span class="log-${type}">${text}</span>`;
+      box.appendChild(line);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function clearLogs() {
+      logTimers.forEach(t => clearTimeout(t));
+      logTimers = [];
+      document.getElementById("log-box").innerHTML = "";
+    }
+
+    function setUnlock(enabled) {
+      const btn = document.getElementById("unlock-btn");
+      enabled ? btn.classList.add("active") : btn.classList.remove("active");
+    }
+
+    function scheduleLog(delay, type, text) {
+      const t = setTimeout(() => addLog(type, text), delay);
+      logTimers.push(t);
+    }
+
+    function connectAction() {
+      if (connecting) return;
+      const userid = document.getElementById("cred-userid").value;
+      const countryCode = document.getElementById("cred-country").value;
+      const dot = document.getElementById("status-dot");
+      const statusText = document.getElementById("status-text");
+      const btn = document.getElementById("connect-btn");
+
+      if (!connected) {
+        if (!userid)      { addLog("err", "Error: please enter a user ID."); return; }
+        if (!countryCode) { addLog("err", "Error: please select a country."); return; }
+
+        const c = countries[countryCode];
+        connecting = true;
+        btn.textContent = "Connecting...";
+        btn.style.opacity = "0.6";
+
+        scheduleLog(0,     "info", "Initiating connection...");
+        scheduleLog(200,   "info", `Authenticating user ID '${userid}'...`);
+        scheduleLog(400,   "info", c.langLine);
+        scheduleLog(600,   "info", `Country: ${c.name} — ${c.lang}`);
+        scheduleLog(4000,  "info", "Establishing secure channel...");
+        scheduleLog(7000,  "info", "Handshake complete. Validating session tokens...");
+        scheduleLog(10000, "ok",   "Session tokens validated.");
+        scheduleLog(12000, "info", "Loading account data...");
+        scheduleLog(14500, "ok",   `User ID '${userid}' connected successfully.`);
+        scheduleLog(14700, "ok",   "Session started. Ready.");
+
+        setTimeout(() => {
+          dot.classList.add("connected");
+          statusText.textContent = "Connected";
+          btn.textContent = "Disconnect";
+          btn.style.opacity = "1";
+          setUnlock(true);
+          connected = true;
+          connecting = false;
+        }, 15000);
+
+      } else {
+        logTimers.forEach(t => clearTimeout(t));
+        logTimers = [];
+        unlocking = false;
+        addLog("warn", "Closing session...");
+        setTimeout(() => {
+          addLog("default", "Session closed.");
+          dot.classList.remove("connected");
+          statusText.textContent = "Disconnected";
+          btn.textContent = "Connect";
+          setUnlock(false);
+          connected = false;
+        }, 500);
+      }
+    }
+
+    function unlockAction() {
+      if (!connected || unlocking) return;
+      unlocking = true;
+
+      const userid = document.getElementById("cred-userid").value;
+      const unlockBtn = document.getElementById("unlock-btn");
+      unlockBtn.classList.remove("active");
+      unlockBtn.style.cursor = "not-allowed";
+
+      const messages = [
+        ["info",    "Starting unban process..."],
+        ["info",    "Contacting support server..."],
+        ["ok",      "Support server responded: OK."],
+        ["info",    "Sending initial message to target account..."],
+        ["ok",      "Message delivered successfully."],
+        ["info",    "Waiting for account response..."],
+        ["info",    "Analyzing account profile..."],
+        ["info",    "Scanning recent posts (1/4)..."],
+        ["ok",      "Post batch 1 analyzed. 12 entries found."],
+        ["info",    "Scanning recent posts (2/4)..."],
+        ["ok",      "Post batch 2 analyzed. 9 entries found."],
+        ["info",    "Scanning recent posts (3/4)..."],
+        ["warn",    "Slow response from server. Retrying..."],
+        ["ok",      "Post batch 3 analyzed. 15 entries found."],
+        ["info",    "Scanning recent posts (4/4)..."],
+        ["ok",      "Post batch 4 complete. Total: 47 posts processed."],
+        ["info",    "Sending follow-up message to support team..."],
+        ["ok",      "Follow-up message sent."],
+        ["info",    "Contacting secondary support channel..."],
+        ["ok",      "Secondary channel confirmed."],
+        ["info",    "Waiting for support team confirmation..."],
+        ["warn",    "Response delayed. Holding connection..."],
+        ["ok",      "Support team confirmed. Proceeding."],
+        ["info",    "Submitting unban request to server..."],
+        ["info",    "Server processing request..."],
+        ["warn",    "Server busy. Queued at position 2..."],
+        ["ok",      "Request moved to position 1. Processing..."],
+        ["ok",      "Server processed request successfully."],
+        ["info",    `Applying unban to account '${userid}'...`],
+        ["info",    "Running final integrity check..."],
+        ["ok",      "Integrity check passed."],
+        ["ok",      "Account successfully updated."],
+        ["ok",      ">>> UNBAN COMPLETED <<<"],
+      ];
+
+      let accumulated = 0;
+      messages.forEach(([type, text], i) => {
+        const gap = i === 0 ? 0 : rand(500, 5000);
+        accumulated += gap;
+        scheduleLog(accumulated, type, text);
+      });
+    }
+  </script>
+</body>
+</html>
